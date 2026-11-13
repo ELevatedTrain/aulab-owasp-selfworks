@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
-
+use Laravel\Fortify\Rules\str;
 class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules;
@@ -19,6 +19,8 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        $salt = Str::random(16); // Generate a random salt
+        $pepper = config('app.pepper'); // Get the pepper from the configuration
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -34,7 +36,8 @@ class CreateNewUser implements CreatesNewUsers
         return User::create([
             'name' => $input['name'],
             'email' => $input['email'],
-            'password' => Hash::make($input['password']),
-        ]);
+            'password' => Hash::make($input['password'].$salt.$pepper),
+            'salt' => $salt,
+        ]); // Hash the password with salt and pepper
     }
 }
