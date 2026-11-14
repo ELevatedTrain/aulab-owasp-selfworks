@@ -29,6 +29,10 @@ class UserController extends Controller
 
     public function update(Request $request, $id){
         $user = User::find($id);
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$id,
+        ]);
 
         $user->update($request->all());
 
@@ -102,7 +106,8 @@ class UserController extends Controller
     }
 
     public function download(Request $request) {
-        return response()->download(storage_path('app/private/'.$request->get('filename')));
+        $filename = $request->get('filename');
+        return Storage::disk('local')->download($request->get('filename'));
     }
 
     public function upload(Request $request)
@@ -198,11 +203,11 @@ class UserController extends Controller
 
     public function downloadPrivateFile($file)
     {
-    if(!$user Auth::user()){
+    if (!$user = Auth::user()) {
         return back()->with('message', 'Please Log In');
     }
 
-    $fileRecord File::where('uid', $file)->where('user_id', $user->id)->firstOrFail();
+    $fileRecord = File::where('uid', $file)->where('user_id', $user->id)->firstOrFail();
     
      
     if(!$fileRecord) {
